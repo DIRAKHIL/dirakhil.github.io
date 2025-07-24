@@ -3,8 +3,15 @@
 [![Status](https://img.shields.io/badge/status-github%20pages%20ready-success)](#deployment)
 [![Security](https://img.shields.io/badge/security-client%20side%20protected-brightgreen)](#security)
 [![Version](https://img.shields.io/badge/version-secure%20release-blue)](#features)
+[![License](https://img.shields.io/badge/license-All%20Rights%20Reserved-red)](#license)
 
-A secure, interactive presentation for the "Head Constable" film project, optimized for GitHub Pages deployment.
+A secure, interactive presentation for the "Head Constable" film project, created and owned by **Akhil Maddali**. This presentation is optimized for GitHub Pages deployment with advanced client-side security features.
+
+## 👨‍💻 **Creator & Owner**
+
+**Created by**: [Akhil Maddali](https://github.com/DIRAKHIL)  
+**Project Owner**: Akhil Maddali  
+**All Rights Reserved**: This is a private project with full rights held by the creator.
 
 ## 🔒 Security Features
 
@@ -100,14 +107,44 @@ This presentation is designed for GitHub Pages deployment:
 │   ├── secure_auth.js     # Secure authentication system
 │   ├── script.js          # Presentation logic
 │   └── help.js           # Help system
-├── content/              # Presentation content (JSON)
-├── images/              # Image assets
 └── README.md           # This file
 ```
 
+## 📄 **License & Rights**
+
+### **Copyright Notice**
+```
+© 2025 Akhil Maddali. All Rights Reserved.
+```
+
+### **License Terms**
+This project is the **exclusive property** of **Akhil Maddali**. All rights, including but not limited to:
+
+- **Copyright**: Full ownership of all code, content, and creative elements
+- **Distribution Rights**: Exclusive right to distribute, modify, or license
+- **Commercial Rights**: All commercial usage rights reserved
+- **Derivative Works**: No derivative works permitted without explicit permission
+- **Private Project**: This is a private project with restricted access
+
+### **Usage Restrictions**
+- ❌ **No unauthorized copying, distribution, or modification**
+- ❌ **No commercial use without explicit written permission**
+- ❌ **No reverse engineering or code extraction**
+- ❌ **No creation of derivative works**
+- ✅ **Viewing and interaction as intended by the creator is permitted**
+
+### **Contact for Licensing**
+For any licensing inquiries or permissions, contact the project owner:
+- **GitHub**: [@DIRAKHIL](https://github.com/DIRAKHIL)
+- **Project**: Head Constable Film Presentation
+
 ---
 
-**Version**: Secure Release  
-**Deployment**: GitHub Pages Ready  
-**Security**: Client-side protected  
-**Status**: ✅ Production ready
+## 🚀 **Project Status**
+
+**Version**: Secure Release v1.0  
+**Deployment**: ✅ GitHub Pages Ready  
+**Security**: 🔒 Client-side Protected  
+**Status**: ✅ Production Ready  
+**Owner**: 👨‍💻 Akhil Maddali  
+**Rights**: 🔐 All Rights Reserved
