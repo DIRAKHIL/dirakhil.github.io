@@ -661,20 +661,54 @@ document.addEventListener('DOMContentLoaded', () => {
                     e.preventDefault();
                     e.stopPropagation();
                     console.log('Poster button clicked');
+                    
+                    // Hide navigation and other elements
+                    const navigation = document.querySelector('.slide-navigation');
+                    if (navigation) navigation.style.display = 'none';
+                    
+                    // Show fullscreen viewer
                     fullscreenViewer.style.display = 'flex';
+                    
+                    // Request fullscreen mode
+                    if (document.documentElement.requestFullscreen) {
+                        document.documentElement.requestFullscreen();
+                    } else if (document.documentElement.webkitRequestFullscreen) {
+                        document.documentElement.webkitRequestFullscreen();
+                    } else if (document.documentElement.msRequestFullscreen) {
+                        document.documentElement.msRequestFullscreen();
+                    }
                 });
                 
                 // Close fullscreen image when ESC key is pressed
                 document.addEventListener('keydown', function(event) {
                     if (event.key === 'Escape' && fullscreenViewer.style.display === 'flex') {
-                        fullscreenViewer.style.display = 'none';
+                        closeFullscreenViewer();
                     }
                 });
                 
                 // Also close when clicking anywhere on the fullscreen viewer
                 fullscreenViewer.addEventListener('click', function() {
-                    fullscreenViewer.style.display = 'none';
+                    closeFullscreenViewer();
                 });
+                
+                // Function to close fullscreen viewer and restore navigation
+                function closeFullscreenViewer() {
+                    // Hide fullscreen viewer
+                    fullscreenViewer.style.display = 'none';
+                    
+                    // Show navigation again
+                    const navigation = document.querySelector('.slide-navigation');
+                    if (navigation) navigation.style.display = 'flex';
+                    
+                    // Exit fullscreen mode
+                    if (document.exitFullscreen) {
+                        document.exitFullscreen();
+                    } else if (document.webkitExitFullscreen) {
+                        document.webkitExitFullscreen();
+                    } else if (document.msExitFullscreen) {
+                        document.msExitFullscreen();
+                    }
+                }
                 
                 console.log('Poster button setup complete');
             } else {
