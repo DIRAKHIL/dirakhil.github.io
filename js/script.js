@@ -1137,6 +1137,36 @@ document.addEventListener('DOMContentLoaded', () => {
                     fullscreenImage.style.maxHeight = '100vh';
                     fullscreenImage.style.maxWidth = '100vw';
                     fullscreenImage.style.objectFit = 'contain';
+                    
+                    // Add Safari fullscreen change listener for dimension fixes
+                    const safariFullscreenHandler = function() {
+                        try {
+                            const isFullscreen = document.webkitFullscreenElement || document.fullscreenElement;
+                            if (isFullscreen && isFullscreen === fullscreenViewer) {
+                                // Force Safari fullscreen dimensions
+                                setTimeout(() => {
+                                    fullscreenViewer.style.width = '100%';
+                                    fullscreenViewer.style.height = '100%';
+                                    fullscreenViewer.style.left = '0';
+                                    fullscreenViewer.style.top = '0';
+                                    fullscreenViewer.style.position = 'fixed';
+                                    fullscreenViewer.style.display = 'flex';
+                                    fullscreenViewer.style.justifyContent = 'center';
+                                    fullscreenViewer.style.alignItems = 'center';
+                                    
+                                    fullscreenImage.style.width = '100%';
+                                    fullscreenImage.style.height = '100%';
+                                    fullscreenImage.style.objectFit = 'cover';
+                                    fullscreenImage.style.objectPosition = 'center';
+                                }, 100);
+                            }
+                        } catch (error) {
+                            console.error('Error in Safari fullscreen handler:', error);
+                        }
+                    };
+                    
+                    AppUtils.safeAddEventListener(document, 'webkitfullscreenchange', safariFullscreenHandler);
+                    AppUtils.safeAddEventListener(document, 'fullscreenchange', safariFullscreenHandler);
                 }
                 
             } catch (error) {
