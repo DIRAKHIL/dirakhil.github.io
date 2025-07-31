@@ -647,6 +647,27 @@
             border: none !important;
             overflow: hidden !important;
         }
+        
+        /* Fullscreen close hint */
+        .fullscreen-close-hint {
+            position: absolute;
+            bottom: 20px;
+            left: 0;
+            right: 0;
+            text-align: center;
+            color: rgba(255, 255, 255, 0.7);
+            font-size: 14px;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            padding: 10px;
+            background-color: rgba(0, 0, 0, 0.5);
+            border-radius: 4px;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+        
+        .fullscreen-image-viewer:hover .fullscreen-close-hint {
+            opacity: 1;
+        }
     </style>
 </head>
 <body>
@@ -1018,12 +1039,19 @@
                 </div>
                 <!-- Poster Button -->
                 <div class="poster-button-container">
-                    <button id="poster-button" class="poster-button">Poster</button>
+                    <button id="poster-button" class="poster-button" 
+                            aria-label="View movie poster in fullscreen" 
+                            aria-haspopup="dialog">Poster</button>
                 </div>
                 
                 <!-- Full Screen Image Viewer -->
-                <div id="fullscreen-image-viewer" class="fullscreen-image-viewer">
+                <div id="fullscreen-image-viewer" class="fullscreen-image-viewer" 
+                     role="dialog" 
+                     aria-modal="true" 
+                     aria-label="Movie Poster Fullscreen View"
+                     tabindex="-1">
                     <img id="fullscreen-image" src="./images/poster/REFERENCE_HC_4k.jpg" alt="Head Constable Poster">
+                    <div class="fullscreen-close-hint" aria-hidden="true">Press ESC or click anywhere to close</div>
                 </div>
             </div>
         </div>
