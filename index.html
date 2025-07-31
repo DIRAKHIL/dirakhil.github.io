@@ -610,27 +610,71 @@
         
         /* Safari-specific fullscreen styles */
         .fullscreen-image-viewer:-webkit-full-screen {
-            width: 100%;
-            height: 100%;
+            width: 100% !important;
+            height: 100% !important;
             background-color: #000;
+            display: flex !important;
+            justify-content: center !important;
+            align-items: center !important;
+            margin: 0 !important;
+            padding: 0 !important;
+        }
+        
+        .fullscreen-image-viewer:-webkit-full-screen img {
+            width: 100% !important;
+            height: 100% !important;
+            object-fit: cover !important;
+            object-position: center !important;
+            max-width: 100% !important;
+            max-height: 100% !important;
         }
         
         .fullscreen-image-viewer:-moz-full-screen {
             width: 100%;
             height: 100%;
             background-color: #000;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        .fullscreen-image-viewer:-moz-full-screen img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            object-position: center;
         }
         
         .fullscreen-image-viewer:-ms-fullscreen {
             width: 100%;
             height: 100%;
             background-color: #000;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        .fullscreen-image-viewer:-ms-fullscreen img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            object-position: center;
         }
         
         .fullscreen-image-viewer:fullscreen {
             width: 100%;
             height: 100%;
             background-color: #000;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        .fullscreen-image-viewer:fullscreen img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            object-position: center;
         }
         
         /* Fallback for browsers that don't support fullscreen API */
