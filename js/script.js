@@ -655,6 +655,9 @@ document.addEventListener('DOMContentLoaded', () => {
             const posterButton = document.getElementById('poster-button');
             const fullscreenViewer = document.getElementById('fullscreen-image-viewer');
             
+            // Track if the image viewer is open - defined at the correct scope level
+            let imageViewerOpen = false;
+            
             if (posterButton && fullscreenViewer) {
                 // Open fullscreen image when poster button is clicked
                 posterButton.addEventListener('click', function(e) {
@@ -672,41 +675,106 @@ document.addEventListener('DOMContentLoaded', () => {
                     
                     // Show fullscreen viewer
                     fullscreenViewer.style.display = 'flex';
+                    imageViewerOpen = true;
                     
                     // Request fullscreen mode
-                    if (document.documentElement.requestFullscreen) {
-                        document.documentElement.requestFullscreen();
-                    } else if (document.documentElement.webkitRequestFullscreen) {
-                        document.documentElement.webkitRequestFullscreen();
-                    } else if (document.documentElement.msRequestFullscreen) {
-                        document.documentElement.msRequestFullscreen();
+                    if (fullscreenViewer.requestFullscreen) {
+                        fullscreenViewer.requestFullscreen();
+                    } else if (fullscreenViewer.webkitRequestFullscreen) {
+                        fullscreenViewer.webkitRequestFullscreen();
+                    } else if (fullscreenViewer.msRequestFullscreen) {
+                        fullscreenViewer.msRequestFullscreen();
                     }
                 });
                 
                 // Close fullscreen image when ESC key is pressed
                 document.addEventListener('keydown', function(event) {
-                    if (event.key === 'Escape' && fullscreenViewer.style.display === 'flex') {
-                        closeFullscreenViewer();
+                    if (event.key === 'Escape') {
+                        // If image viewer is open, close it but stay in fullscreen
+                        if (fullscreenViewer.style.display === 'flex') {
+                            event.preventDefault(); // Prevent default ESC behavior
+                            closeImageOnly();
+                        }
                     }
                 });
                 
                 // Also close when clicking anywhere on the fullscreen viewer
-                fullscreenViewer.addEventListener('click', function() {
-                    closeFullscreenViewer();
+                fullscreenViewer.addEventListener('click', function(e) {
+                    // Prevent any default behavior
+                    e.preventDefault();
+                    e.stopPropagation();
+                    
+                    // Close the image viewer
+                    closeImageOnly();
                 });
                 
-                // Function to close fullscreen viewer and restore navigation
-                function closeFullscreenViewer() {
+                // Handle fullscreen change events from browser
+                document.addEventListener('fullscreenchange', handleFullscreenChange);
+                document.addEventListener('webkitfullscreenchange', handleFullscreenChange);
+                document.addEventListener('mozfullscreenchange', handleFullscreenChange);
+                document.addEventListener('MSFullscreenChange', handleFullscreenChange);
+                
+                function handleFullscreenChange() {
+                    // If we're no longer in fullscreen mode but the viewer is still displayed
+                    if (!document.fullscreenElement && 
+                        !document.webkitFullscreenElement && 
+                        !document.mozFullScreenElement && 
+                        !document.msFullscreenElement && 
+                        fullscreenViewer.style.display === 'flex') {
+                        
+                        // Hide fullscreen viewer
+                        fullscreenViewer.style.display = 'none';
+                        
+                        // Show navigation again
+                        restoreNavigation();
+                    }
+                }
+                
+                // Function to restore navigation elements
+                function restoreNavigation() {
+                    // Show navigation again
+                    const navigation = document.querySelector('.slide-navigation');
+                    if (navigation) {
+                        navigation.style.display = 'flex';
+                        navigation.style.visibility = 'visible';
+                        navigation.style.opacity = '1';
+                        navigation.style.pointerEvents = 'auto';
+                    }
+                    
+                    const navElement = document.querySelector('nav');
+                    if (navElement) {
+                        navElement.style.display = 'flex';
+                        navElement.style.visibility = 'visible';
+                        navElement.style.opacity = '1';
+                        navElement.style.pointerEvents = 'auto';
+                    }
+                    
+                    // Make sure all buttons are clickable again
+                    const allButtons = document.querySelectorAll('button');
+                    allButtons.forEach(button => {
+                        button.style.pointerEvents = 'auto';
+                    });
+                    
+                    // Make sure all links are clickable again
+                    const allLinks = document.querySelectorAll('a');
+                    allLinks.forEach(link => {
+                        link.style.pointerEvents = 'auto';
+                    });
+                    
+                    // Re-enable all click events
+                    document.body.style.pointerEvents = 'auto';
+                    
+                    // Reset the flag
+                    imageViewerOpen = false;
+                }
+                
+                // Function to close only the image viewer but stay in fullscreen mode
+                function closeImageOnly() {
                     // Hide fullscreen viewer
                     fullscreenViewer.style.display = 'none';
                     
                     // Show navigation again
-                    const navigation = document.querySelector('.slide-navigation, nav');
-                    if (navigation) navigation.style.display = 'flex';
-                    
-                    // Also try with the correct selector
-                    const navElement = document.querySelector('nav');
-                    if (navElement) navElement.style.display = 'flex';
+                    restoreNavigation();
                     
                     // Exit fullscreen mode
                     if (document.exitFullscreen) {
@@ -716,6 +784,11 @@ document.addEventListener('DOMContentLoaded', () => {
                     } else if (document.msExitFullscreen) {
                         document.msExitFullscreen();
                     }
+                }
+                
+                // Function to close fullscreen viewer and exit fullscreen mode
+                function closeFullscreenViewer() {
+                    closeImageOnly();
                 }
                 
                 console.log('Poster button setup complete');
