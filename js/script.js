@@ -650,13 +650,17 @@ document.addEventListener('DOMContentLoaded', () => {
         window.previousSlide = () => window.presentationController.previousSlide();
         
         // Poster Button Functionality
-        document.addEventListener('DOMContentLoaded', function() {
+        // Execute immediately and also on DOMContentLoaded
+        function setupPosterButton() {
             const posterButton = document.getElementById('poster-button');
             const fullscreenViewer = document.getElementById('fullscreen-image-viewer');
             
             if (posterButton && fullscreenViewer) {
                 // Open fullscreen image when poster button is clicked
-                posterButton.addEventListener('click', function() {
+                posterButton.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    console.log('Poster button clicked');
                     fullscreenViewer.style.display = 'flex';
                 });
                 
@@ -671,8 +675,20 @@ document.addEventListener('DOMContentLoaded', () => {
                 fullscreenViewer.addEventListener('click', function() {
                     fullscreenViewer.style.display = 'none';
                 });
+                
+                console.log('Poster button setup complete');
+            } else {
+                console.log('Poster button or fullscreen viewer not found');
+                if (!posterButton) console.log('Poster button not found');
+                if (!fullscreenViewer) console.log('Fullscreen viewer not found');
             }
-        });
+        }
+        
+        // Run immediately
+        setupPosterButton();
+        
+        // Also run on DOMContentLoaded to ensure elements are loaded
+        document.addEventListener('DOMContentLoaded', setupPosterButton);
     } catch (error) {
         console.error('Failed to initialize presentation:', error);
         // Show fallback message to user
