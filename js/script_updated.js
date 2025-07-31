@@ -1,3 +1,17 @@
+// Add CSS styles for disabled button
+(function() {
+    const style = document.createElement('style');
+    style.textContent = `
+        .button-disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            pointer-events: none;
+            transition: opacity 0.3s ease;
+        }
+    `;
+    document.head.appendChild(style);
+})();
+
 // Global timeout and event listener tracking
 const AppUtils = {
     timeouts: [],
@@ -404,6 +418,12 @@ class PresentationController {
         try {
             // Ignore key events if user is typing in an input field
             if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.isContentEditable) {
+                return;
+            }
+            
+            // Check if poster was just closed to prevent immediate space key actions
+            if (e.key === ' ' && window.posterJustClosed) {
+                e.preventDefault();
                 return;
             }
             
@@ -991,6 +1011,11 @@ document.addEventListener('DOMContentLoaded', () => {
                         e.preventDefault();
                         e.stopPropagation();
                         
+                        // Check if poster was just closed to prevent immediate reopening
+                        if (window.posterJustClosed) {
+                            return;
+                        }
+                        
                         // Hide navigation and other elements
                         const elements = document.querySelectorAll('.slide-navigation, nav');
                         elements.forEach(el => {
@@ -1082,10 +1107,28 @@ document.addEventListener('DOMContentLoaded', () => {
                                 if (el) el.style.display = '';
                             });
                             
-                            // Return focus to poster button for accessibility
+                            // Set a flag to prevent immediate reopening
+                            window.posterJustClosed = true;
+                            
+                            // Clear the flag after a short delay
+                            AppUtils.safeSetTimeout(() => {
+                                window.posterJustClosed = false;
+                            }, 500);
+                            
+                            // Return focus to poster button for accessibility but prevent immediate activation
                             if (posterButton) {
                                 AppUtils.safeSetTimeout(() => {
                                     posterButton.focus();
+                                    
+                                    // Temporarily disable the poster button
+                                    posterButton.disabled = true;
+                                    posterButton.classList.add('button-disabled');
+                                    
+                                    // Re-enable after a delay
+                                    AppUtils.safeSetTimeout(() => {
+                                        posterButton.disabled = false;
+                                        posterButton.classList.remove('button-disabled');
+                                    }, 300);
                                 }, 100);
                             }
                         }
