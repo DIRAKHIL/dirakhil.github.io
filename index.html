@@ -607,6 +607,46 @@
             max-width: 100%;
             max-height: 100%;
         }
+        
+        /* Safari-specific fullscreen styles */
+        .fullscreen-image-viewer:-webkit-full-screen {
+            width: 100%;
+            height: 100%;
+            background-color: #000;
+        }
+        
+        .fullscreen-image-viewer:-moz-full-screen {
+            width: 100%;
+            height: 100%;
+            background-color: #000;
+        }
+        
+        .fullscreen-image-viewer:-ms-fullscreen {
+            width: 100%;
+            height: 100%;
+            background-color: #000;
+        }
+        
+        .fullscreen-image-viewer:fullscreen {
+            width: 100%;
+            height: 100%;
+            background-color: #000;
+        }
+        
+        /* Fallback for browsers that don't support fullscreen API */
+        .using-fullscreen-fallback {
+            position: fixed !important;
+            top: 0 !important;
+            left: 0 !important;
+            width: 100vw !important;
+            height: 100vh !important;
+            z-index: 10000 !important;
+            background-color: #000 !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            border: none !important;
+            overflow: hidden !important;
+        }
     </style>
 </head>
 <body>
