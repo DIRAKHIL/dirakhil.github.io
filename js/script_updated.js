@@ -463,10 +463,6 @@ class PresentationController {
                 case 'F':
                     this.toggleFullscreen();
                     break;
-                case 'h':
-                case 'H':
-                    this.showHelp();
-                    break;
                 case 'p':
                 case 'P':
                     this.toggleAccessMode();
@@ -513,101 +509,7 @@ class PresentationController {
         }
     }
     
-    showHelp() {
-        try {
-            // Create help overlay
-            let helpOverlay = document.querySelector('.help-overlay');
-            
-            if (!helpOverlay) {
-                helpOverlay = document.createElement('div');
-                helpOverlay.className = 'help-overlay';
-                
-                const helpContent = document.createElement('div');
-                helpContent.className = 'help-content';
-                
-                // Create help content using safe DOM manipulation
-                const title = document.createElement('h2');
-                title.textContent = 'Keyboard Shortcuts';
-                
-                const shortcuts = [
-                    { key: '← →', description: 'Navigate between slides' },
-                    { key: 'Space', description: 'Next slide' },
-                    { key: 'Home / End', description: 'First / Last slide' },
-                    { key: 'F', description: 'Toggle fullscreen' },
-                    { key: 'H', description: 'Show/hide this help' },
-                    { key: 'P', description: 'Toggle accessibility mode' },
-                    { key: 'Esc', description: 'Exit fullscreen or close popups' }
-                ];
-                
-                const shortcutsList = document.createElement('ul');
-                shortcuts.forEach(shortcut => {
-                    const item = document.createElement('li');
-                    
-                    const keySpan = document.createElement('span');
-                    keySpan.className = 'key';
-                    keySpan.textContent = shortcut.key;
-                    
-                    item.appendChild(keySpan);
-                    item.appendChild(document.createTextNode(` - ${shortcut.description}`));
-                    
-                    shortcutsList.appendChild(item);
-                });
-                
-                // Add close button
-                const closeButton = document.createElement('button');
-                closeButton.className = 'close-help';
-                closeButton.textContent = '×';
-                closeButton.setAttribute('aria-label', 'Close help');
-                
-                // Add event listener to close button
-                this.safeAddEventListener(closeButton, 'click', () => {
-                    helpOverlay.classList.remove('active');
-                    this.safeSetTimeout(() => {
-                        if (helpOverlay.parentNode) {
-                            helpOverlay.remove();
-                        }
-                    }, 300);
-                });
-                
-                // Add event listener to close on ESC key
-                const escHandler = (e) => {
-                    if (e.key === 'Escape') {
-                        closeButton.click();
-                        document.removeEventListener('keydown', escHandler);
-                    }
-                };
-                
-                this.safeAddEventListener(document, 'keydown', escHandler);
-                
-                // Assemble help overlay
-                helpContent.appendChild(closeButton);
-                helpContent.appendChild(title);
-                helpContent.appendChild(shortcutsList);
-                helpOverlay.appendChild(helpContent);
-                
-                document.body.appendChild(helpOverlay);
-                
-                // Show with animation
-                this.safeSetTimeout(() => {
-                    helpOverlay.classList.add('active');
-                }, 10);
-            } else {
-                // Toggle visibility if already exists
-                if (helpOverlay.classList.contains('active')) {
-                    helpOverlay.classList.remove('active');
-                    this.safeSetTimeout(() => {
-                        if (helpOverlay.parentNode) {
-                            helpOverlay.remove();
-                        }
-                    }, 300);
-                } else {
-                    helpOverlay.classList.add('active');
-                }
-            }
-        } catch (error) {
-            console.error('Error showing help:', error);
-        }
-    }
+
     
     toggleAccessMode() {
         try {
