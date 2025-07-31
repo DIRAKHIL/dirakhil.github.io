@@ -663,8 +663,12 @@ document.addEventListener('DOMContentLoaded', () => {
                     console.log('Poster button clicked');
                     
                     // Hide navigation and other elements
-                    const navigation = document.querySelector('.slide-navigation');
+                    const navigation = document.querySelector('.slide-navigation, nav');
                     if (navigation) navigation.style.display = 'none';
+                    
+                    // Also try with the correct selector
+                    const navElement = document.querySelector('nav');
+                    if (navElement) navElement.style.display = 'none';
                     
                     // Show fullscreen viewer
                     fullscreenViewer.style.display = 'flex';
@@ -697,8 +701,12 @@ document.addEventListener('DOMContentLoaded', () => {
                     fullscreenViewer.style.display = 'none';
                     
                     // Show navigation again
-                    const navigation = document.querySelector('.slide-navigation');
+                    const navigation = document.querySelector('.slide-navigation, nav');
                     if (navigation) navigation.style.display = 'flex';
+                    
+                    // Also try with the correct selector
+                    const navElement = document.querySelector('nav');
+                    if (navElement) navElement.style.display = 'flex';
                     
                     // Exit fullscreen mode
                     if (document.exitFullscreen) {
