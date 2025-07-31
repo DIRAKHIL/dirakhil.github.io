@@ -956,6 +956,24 @@ document.addEventListener('DOMContentLoaded', () => {
                         // Focus the viewer for keyboard accessibility
                         fullscreenViewer.focus();
                         
+                        // Safari-specific pre-fullscreen setup
+                        if (isSafari) {
+                            // Pre-apply Safari fullscreen styles immediately
+                            fullscreenViewer.style.width = '100%';
+                            fullscreenViewer.style.height = '100%';
+                            fullscreenViewer.style.left = '0';
+                            fullscreenViewer.style.top = '0';
+                            fullscreenViewer.style.position = 'fixed';
+                            fullscreenViewer.style.display = 'flex';
+                            fullscreenViewer.style.justifyContent = 'center';
+                            fullscreenViewer.style.alignItems = 'center';
+                            
+                            fullscreenImage.style.width = '100%';
+                            fullscreenImage.style.height = '100%';
+                            fullscreenImage.style.objectFit = 'cover';
+                            fullscreenImage.style.objectPosition = 'center';
+                        }
+
                         // Request fullscreen mode with Safari-specific handling
                         try {
                             if (fullscreenViewer.requestFullscreen) {
@@ -968,6 +986,18 @@ document.addEventListener('DOMContentLoaded', () => {
                             } else if (fullscreenViewer.webkitRequestFullscreen) {
                                 // Safari and older WebKit browsers
                                 fullscreenViewer.webkitRequestFullscreen();
+                                
+                                // Immediate Safari style application after fullscreen request
+                                if (isSafari) {
+                                    setTimeout(() => {
+                                        fullscreenViewer.style.width = '100%';
+                                        fullscreenViewer.style.height = '100%';
+                                        fullscreenViewer.style.left = '0';
+                                        fullscreenViewer.style.top = '0';
+                                        fullscreenImage.style.width = '100%';
+                                        fullscreenImage.style.height = '100%';
+                                    }, 1);
+                                }
                             } else if (fullscreenViewer.mozRequestFullScreen) {
                                 fullscreenViewer.mozRequestFullScreen();
                             } else if (fullscreenViewer.msRequestFullscreen) {
@@ -1143,8 +1173,8 @@ document.addEventListener('DOMContentLoaded', () => {
                         try {
                             const isFullscreen = document.webkitFullscreenElement || document.fullscreenElement;
                             if (isFullscreen && isFullscreen === fullscreenViewer) {
-                                // Force Safari fullscreen dimensions
-                                setTimeout(() => {
+                                // Apply styles immediately
+                                const applyStyles = () => {
                                     fullscreenViewer.style.width = '100%';
                                     fullscreenViewer.style.height = '100%';
                                     fullscreenViewer.style.left = '0';
@@ -1153,12 +1183,25 @@ document.addEventListener('DOMContentLoaded', () => {
                                     fullscreenViewer.style.display = 'flex';
                                     fullscreenViewer.style.justifyContent = 'center';
                                     fullscreenViewer.style.alignItems = 'center';
+                                    fullscreenViewer.style.margin = '0';
+                                    fullscreenViewer.style.padding = '0';
                                     
                                     fullscreenImage.style.width = '100%';
                                     fullscreenImage.style.height = '100%';
                                     fullscreenImage.style.objectFit = 'cover';
                                     fullscreenImage.style.objectPosition = 'center';
-                                }, 100);
+                                    fullscreenImage.style.margin = '0';
+                                    fullscreenImage.style.padding = '0';
+                                };
+                                
+                                // Apply immediately
+                                applyStyles();
+                                
+                                // Apply again after short delays to ensure Safari picks it up
+                                setTimeout(applyStyles, 10);
+                                setTimeout(applyStyles, 50);
+                                setTimeout(applyStyles, 100);
+                                setTimeout(applyStyles, 200);
                             }
                         } catch (error) {
                             console.error('Error in Safari fullscreen handler:', error);
