@@ -648,6 +648,31 @@ document.addEventListener('DOMContentLoaded', () => {
         // Add global functions for navigation buttons
         window.nextSlide = () => window.presentationController.nextSlide();
         window.previousSlide = () => window.presentationController.previousSlide();
+        
+        // Poster Button Functionality
+        document.addEventListener('DOMContentLoaded', function() {
+            const posterButton = document.getElementById('poster-button');
+            const fullscreenViewer = document.getElementById('fullscreen-image-viewer');
+            
+            if (posterButton && fullscreenViewer) {
+                // Open fullscreen image when poster button is clicked
+                posterButton.addEventListener('click', function() {
+                    fullscreenViewer.style.display = 'flex';
+                });
+                
+                // Close fullscreen image when ESC key is pressed
+                document.addEventListener('keydown', function(event) {
+                    if (event.key === 'Escape' && fullscreenViewer.style.display === 'flex') {
+                        fullscreenViewer.style.display = 'none';
+                    }
+                });
+                
+                // Also close when clicking anywhere on the fullscreen viewer
+                fullscreenViewer.addEventListener('click', function() {
+                    fullscreenViewer.style.display = 'none';
+                });
+            }
+        });
     } catch (error) {
         console.error('Failed to initialize presentation:', error);
         // Show fallback message to user

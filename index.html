@@ -498,6 +498,65 @@
             opacity: 0;
             transform: translateY(20px);
         }
+        
+        /* Poster Button Styles */
+        .poster-button-container {
+            position: absolute;
+            bottom: 40px;
+            left: 0;
+            right: 0;
+            display: flex;
+            justify-content: center;
+            z-index: 10;
+        }
+        
+        .poster-button {
+            background: rgba(255, 255, 255, 0.25);
+            color: white;
+            border: none;
+            border-radius: 30px;
+            padding: 12px 35px;
+            font-size: 18px;
+            font-weight: 600;
+            cursor: pointer;
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.18);
+            transition: all 0.3s var(--easing-smooth);
+            text-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+            letter-spacing: 1px;
+        }
+        
+        .poster-button:hover {
+            background: rgba(255, 255, 255, 0.4);
+            transform: translateY(-3px);
+            box-shadow: 0 12px 32px rgba(0, 0, 0, 0.15);
+        }
+        
+        .poster-button:active {
+            transform: translateY(0);
+        }
+        
+        /* Full Screen Image Viewer */
+        .fullscreen-image-viewer {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: #000;
+            z-index: 9999;
+            display: none;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        .fullscreen-image-viewer img {
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: contain;
+        }
     </style>
 </head>
 <body>
@@ -866,6 +925,15 @@
                             </div>
                         </div>
                     </div>
+                </div>
+                <!-- Poster Button -->
+                <div class="poster-button-container">
+                    <button id="poster-button" class="poster-button">Poster</button>
+                </div>
+                
+                <!-- Full Screen Image Viewer -->
+                <div id="fullscreen-image-viewer" class="fullscreen-image-viewer">
+                    <img id="fullscreen-image" src="./images/poster/REFERENCE_HC_4k.heic" alt="Head Constable Poster">
                 </div>
             </div>
         </div>
