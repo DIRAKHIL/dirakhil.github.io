@@ -3,10 +3,14 @@
     const style = document.createElement('style');
     style.textContent = `
         .button-disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
-            pointer-events: none;
-            transition: opacity 0.3s ease;
+            opacity: 0.3 !important;
+            cursor: not-allowed !important;
+            pointer-events: none !important;
+            transition: all 0.3s ease !important;
+            background-color: #ccc !important;
+            color: #666 !important;
+            box-shadow: none !important;
+            transform: scale(0.95) !important;
         }
     `;
     document.head.appendChild(style);
@@ -1013,6 +1017,13 @@ document.addEventListener('DOMContentLoaded', () => {
                         
                         // Check if poster was just closed to prevent immediate reopening
                         if (window.posterJustClosed) {
+                            console.log('Poster was just closed, ignoring click');
+                            return;
+                        }
+                        
+                        // Check if button is disabled
+                        if (e.currentTarget && (e.currentTarget.disabled || e.currentTarget.classList.contains('button-disabled'))) {
+                            console.log('Button is disabled, ignoring click');
                             return;
                         }
                         
@@ -1110,25 +1121,29 @@ document.addEventListener('DOMContentLoaded', () => {
                             // Set a flag to prevent immediate reopening
                             window.posterJustClosed = true;
                             
-                            // Clear the flag after a short delay
+                            // Immediately disable the poster button
+                            if (posterButton) {
+                                posterButton.disabled = true;
+                                posterButton.classList.add('button-disabled');
+                                posterButton.setAttribute('aria-disabled', 'true');
+                            }
+                            
+                            // Clear the flag after a longer delay (1 second)
                             AppUtils.safeSetTimeout(() => {
                                 window.posterJustClosed = false;
-                            }, 500);
+                                
+                                // Re-enable the button after the delay
+                                if (posterButton) {
+                                    posterButton.disabled = false;
+                                    posterButton.classList.remove('button-disabled');
+                                    posterButton.setAttribute('aria-disabled', 'false');
+                                }
+                            }, 1000);
                             
-                            // Return focus to poster button for accessibility but prevent immediate activation
+                            // Return focus to poster button for accessibility
                             if (posterButton) {
                                 AppUtils.safeSetTimeout(() => {
                                     posterButton.focus();
-                                    
-                                    // Temporarily disable the poster button
-                                    posterButton.disabled = true;
-                                    posterButton.classList.add('button-disabled');
-                                    
-                                    // Re-enable after a delay
-                                    AppUtils.safeSetTimeout(() => {
-                                        posterButton.disabled = false;
-                                        posterButton.classList.remove('button-disabled');
-                                    }, 300);
                                 }, 100);
                             }
                         }
@@ -1180,7 +1195,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 // Add keyboard accessibility for poster button
                 if (posterButton) {
                     AppUtils.safeAddEventListener(posterButton, 'keydown', (event) => {
-                        if (event.key === 'Enter' || event.key === ' ') {
+                        if ((event.key === 'Enter' || event.key === ' ') && 
+                            !posterButton.disabled && 
+                            !posterButton.classList.contains('button-disabled') &&
+                            !window.posterJustClosed) {
                             event.preventDefault();
                             posterClickHandler(event);
                         }

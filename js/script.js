@@ -1,3 +1,21 @@
+// Add CSS styles for disabled button
+(function() {
+    const style = document.createElement('style');
+    style.textContent = `
+        .button-disabled {
+            opacity: 0.3 !important;
+            cursor: not-allowed !important;
+            pointer-events: none !important;
+            transition: all 0.3s ease !important;
+            background-color: #ccc !important;
+            color: #666 !important;
+            box-shadow: none !important;
+            transform: scale(0.95) !important;
+        }
+    `;
+    document.head.appendChild(style);
+})();
+
 // Global timeout and event listener tracking
 const AppUtils = {
     timeouts: [],
@@ -61,64 +79,29 @@ function checkBrowserCompatibility() {
     
     // Check for ES6 class support using safer detection method
     try {
-        // Test if class syntax is supported
-        Function('class TestClass {}'); // This just tests syntax parsing, doesn't execute
+        eval('class TestClass {}');
     } catch (e) {
-        warnings.push('ES6 classes not supported');
+        warnings.push('Your browser does not support modern JavaScript features. The presentation may not work correctly.');
     }
     
-    // Check for arrow functions using feature detection
-    try {
-        // Test if arrow function syntax is supported
-        Function('() => {}'); // This just tests syntax parsing, doesn't execute
-    } catch (e) {
-        warnings.push('Arrow functions not supported');
+    // Check for fullscreen API support
+    if (!document.documentElement.requestFullscreen && 
+        !document.documentElement.mozRequestFullScreen && 
+        !document.documentElement.webkitRequestFullscreen && 
+        !document.documentElement.msRequestFullscreen) {
+        warnings.push('Your browser may not support fullscreen mode. Some features might be limited.');
     }
     
-    // Check for const/let using feature detection
-    try {
-        // Test if const/let syntax is supported
-        Function('const test = 1; let test2 = 2;'); // This just tests syntax parsing, doesn't execute
-    } catch (e) {
-        warnings.push('const/let not supported');
+    // Check for CSS Grid support
+    if (window.CSS && !CSS.supports('display', 'grid')) {
+        warnings.push('Your browser does not fully support CSS Grid. The layout may appear incorrect.');
     }
     
-    // Check for sessionStorage
-    if (typeof Storage === 'undefined') {
-        warnings.push('Web Storage not supported');
-    }
-    
-    // Check for Fullscreen API support
-    const fullscreenSupported = document.documentElement.requestFullscreen || 
-                               document.documentElement.webkitRequestFullscreen || 
-                               document.documentElement.mozRequestFullScreen || 
-                               document.documentElement.msRequestFullscreen;
-    
-    if (!fullscreenSupported) {
-        warnings.push('Fullscreen API not fully supported');
-    }
-    
+    // Display warnings if any
     if (warnings.length > 0) {
-        console.warn('Browser compatibility issues detected:', warnings);
-        console.warn('Some features may not work properly in this browser');
-        
-        // Show user-friendly warning for critical issues
-        const message = 'Your browser may not support all features of this presentation. ' +
-                      'Please use a modern browser like Chrome, Firefox, Safari, or Edge for the best experience.';
-        
-        // Try to show a more user-friendly notification
-        if (document.body) {
-            showCompatibilityWarning(message);
-        } else {
-            // Fallback to alert if DOM not ready
-            setTimeout(() => {
-                if (document.body) {
-                    showCompatibilityWarning(message);
-                } else {
-                    alert(message);
-                }
-            }, 100);
-        }
+        warnings.forEach(warning => {
+            showCompatibilityWarning(warning);
+        });
     }
     
     return warnings.length === 0;
@@ -384,35 +367,19 @@ class PresentationController {
     
     goToSlide(slideNumber) {
         try {
-            // Validate slide number
             if (slideNumber < 1 || slideNumber > this.totalSlides) {
                 console.warn(`Invalid slide number: ${slideNumber}`);
                 return;
             }
             
-            // Remove active class from current slide
-            const currentActiveSlide = document.querySelector('.slide.active');
-            if (currentActiveSlide) {
-                currentActiveSlide.classList.remove('active');
-            }
+            // Update current slide
+            this.currentSlide = slideNumber;
             
-            // Add active class to new slide
-            const newSlide = document.getElementById(`slide-${slideNumber}`);
-            if (newSlide) {
-                this.currentSlide = slideNumber;
-                newSlide.classList.add('active');
-                
-                // Update display
-                this.updateSlideDisplay();
-                this.updateProgress();
-                
-                // Navigation hint removed for slide 1 as requested
-                // if (slideNumber === 1) {
-                //     this.showNavigationHint();
-                // }
-            } else {
-                console.error(`Slide element not found: slide-${slideNumber}`);
-            }
+            // Update slide display
+            this.updateSlideDisplay();
+            
+            // Update progress bar
+            this.updateProgress();
         } catch (error) {
             console.error('Error navigating to slide:', error);
         }
@@ -420,148 +387,264 @@ class PresentationController {
     
     updateSlideDisplay() {
         try {
-            // Update slide counter
+            // Hide all slides
+            this.slides.forEach(slide => {
+                slide.classList.remove('active');
+            });
+            
+            // Show current slide
+            const currentSlideElement = document.getElementById(`slide-${this.currentSlide}`);
+            if (currentSlideElement) {
+                currentSlideElement.classList.add('active');
+            }
+            
+            // Update current slide number
             if (this.currentSlideElement) {
                 this.currentSlideElement.textContent = this.currentSlide;
-            }
-            
-            // Update navigation buttons
-            const prevBtn = document.querySelector('.prev-btn');
-            const nextBtn = document.querySelector('.next-btn');
-            
-            if (prevBtn) {
-                prevBtn.disabled = this.currentSlide === 1;
-            }
-            if (nextBtn) {
-                nextBtn.disabled = this.currentSlide === this.totalSlides;
             }
         } catch (error) {
             console.error('Error updating slide display:', error);
         }
     }
     
-    handleKeyPress(e) {
-        // Skip if the target is an input field
-        if (e.target.tagName === 'INPUT') {
-            return;
-        }
-        
-        // Check if character popup or help popup is open
-        const popup = document.getElementById('character-popup');
-        const isPopupActive = popup && popup.classList.contains('active');
-        const helpPopup = document.querySelector('.help-popup');
-        const authPage = document.getElementById('auth-page');
-        const isAuthVisible = authPage && authPage.style.display !== 'none';
-        
-        // Handle Escape key for popups
-        if (e.key === 'Escape') {
-            if (isPopupActive) {
-                return; // Let the popup handler handle this
+    updateProgress() {
+        try {
+            if (this.progressFill) {
+                const progress = (this.currentSlide - 1) / (this.totalSlides - 1) * 100;
+                this.progressFill.style.width = `${progress}%`;
             }
-            if (helpPopup) {
-                e.preventDefault();
-                helpPopup.style.opacity = '0';
-                setTimeout(() => helpPopup.remove(), 300);
-                return;
-            }
-            // Exit fullscreen if in fullscreen mode
-            if (document.fullscreenElement) {
-                document.exitFullscreen();
-                return;
-            }
-        }
-        
-        // Skip H key handling as it's now handled by the HelpController
-        if (e.key === 'h' || e.key === 'H') {
-            return;
-        }
-        
-        // Don't handle other keys when popups are active
-        if (isPopupActive || helpPopup || isAuthVisible) {
-            return;
-        }
-        
-        // Skip 'P' key handling as it's reserved for authentication
-        if (e.key === 'p' || e.key === 'P') {
-            return;
-        }
-        
-        switch(e.key) {
-            case 'ArrowRight':
-            case ' ':
-            case 'PageDown':
-                e.preventDefault();
-                this.nextSlide();
-                break;
-            case 'ArrowLeft':
-            case 'PageUp':
-                e.preventDefault();
-                this.previousSlide();
-                break;
-            case 'Home':
-                e.preventDefault();
-                this.goToSlide(1);
-                break;
-            case 'End':
-                e.preventDefault();
-                this.goToSlide(this.totalSlides);
-                break;
-            case 'f':
-            case 'F':
-                e.preventDefault();
-                this.toggleFullscreen();
-                break;
-            default:
-                // Number keys for direct slide navigation
-                const slideNum = parseInt(e.key);
-                if (slideNum >= 1 && slideNum <= this.totalSlides) {
-                    e.preventDefault();
-                    this.goToSlide(slideNum);
-                }
-                break;
+        } catch (error) {
+            console.error('Error updating progress bar:', error);
         }
     }
     
-    updateProgress() {
-        if (this.progressFill) {
-            const progress = (this.currentSlide - 1) / (this.totalSlides - 1) * 100;
-            this.progressFill.style.width = `${progress}%`;
+    handleKeyPress(e) {
+        try {
+            // Ignore key events if user is typing in an input field
+            if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.isContentEditable) {
+                return;
+            }
+            
+            // Check if poster was just closed to prevent immediate space key actions
+            if (e.key === ' ' && window.posterJustClosed) {
+                e.preventDefault();
+                return;
+            }
+            
+            switch (e.key) {
+                case 'ArrowRight':
+                case ' ':
+                    this.nextSlide();
+                    break;
+                case 'ArrowLeft':
+                    this.previousSlide();
+                    break;
+                case 'Home':
+                    this.goToSlide(1);
+                    break;
+                case 'End':
+                    this.goToSlide(this.totalSlides);
+                    break;
+                case 'f':
+                case 'F':
+                    this.toggleFullscreen();
+                    break;
+                case 'h':
+                case 'H':
+                    this.showHelp();
+                    break;
+                case 'p':
+                case 'P':
+                    this.toggleAccessMode();
+                    break;
+            }
+        } catch (error) {
+            console.error('Error handling key press:', error);
         }
     }
     
     toggleFullscreen() {
-        // Check for fullscreen element with vendor prefixes
-        const isFullScreen = document.fullscreenElement || 
-                            document.webkitFullscreenElement || 
-                            document.mozFullScreenElement || 
-                            document.msFullscreenElement;
-        
-        if (!isFullScreen) {
-            // Request fullscreen with vendor prefixes
-            const docEl = document.documentElement;
+        try {
+            if (!document.fullscreenElement &&
+                !document.mozFullScreenElement &&
+                !document.webkitFullscreenElement &&
+                !document.msFullscreenElement) {
+                // Enter fullscreen
+                if (document.documentElement.requestFullscreen) {
+                    document.documentElement.requestFullscreen();
+                } else if (document.documentElement.msRequestFullscreen) {
+                    document.documentElement.msRequestFullscreen();
+                } else if (document.documentElement.mozRequestFullScreen) {
+                    document.documentElement.mozRequestFullScreen();
+                } else if (document.documentElement.webkitRequestFullscreen) {
+                    document.documentElement.webkitRequestFullscreen(Element.ALLOW_KEYBOARD_INPUT);
+                }
+                
+                // Show navigation hint
+                this.showNavigationHint();
+            } else {
+                // Exit fullscreen
+                if (document.exitFullscreen) {
+                    document.exitFullscreen();
+                } else if (document.msExitFullscreen) {
+                    document.msExitFullscreen();
+                } else if (document.mozCancelFullScreen) {
+                    document.mozCancelFullScreen();
+                } else if (document.webkitExitFullscreen) {
+                    document.webkitExitFullscreen();
+                }
+            }
+        } catch (error) {
+            console.error('Error toggling fullscreen:', error);
+        }
+    }
+    
+    showHelp() {
+        try {
+            // Create help overlay
+            let helpOverlay = document.querySelector('.help-overlay');
             
-            if (docEl.requestFullscreen) {
-                docEl.requestFullscreen().catch(err => {
-                    console.error(`Error attempting to enable fullscreen: ${err.message}`);
+            if (!helpOverlay) {
+                helpOverlay = document.createElement('div');
+                helpOverlay.className = 'help-overlay';
+                
+                const helpContent = document.createElement('div');
+                helpContent.className = 'help-content';
+                
+                // Create help content using safe DOM manipulation
+                const title = document.createElement('h2');
+                title.textContent = 'Keyboard Shortcuts';
+                
+                const shortcuts = [
+                    { key: '← →', description: 'Navigate between slides' },
+                    { key: 'Space', description: 'Next slide' },
+                    { key: 'Home / End', description: 'First / Last slide' },
+                    { key: 'F', description: 'Toggle fullscreen' },
+                    { key: 'H', description: 'Show/hide this help' },
+                    { key: 'P', description: 'Toggle accessibility mode' },
+                    { key: 'Esc', description: 'Exit fullscreen or close popups' }
+                ];
+                
+                const shortcutsList = document.createElement('ul');
+                shortcuts.forEach(shortcut => {
+                    const item = document.createElement('li');
+                    
+                    const keySpan = document.createElement('span');
+                    keySpan.className = 'key';
+                    keySpan.textContent = shortcut.key;
+                    
+                    item.appendChild(keySpan);
+                    item.appendChild(document.createTextNode(` - ${shortcut.description}`));
+                    
+                    shortcutsList.appendChild(item);
                 });
-            } else if (docEl.webkitRequestFullscreen) { // Safari
-                docEl.webkitRequestFullscreen();
-            } else if (docEl.mozRequestFullScreen) { // Firefox
-                docEl.mozRequestFullScreen();
-            } else if (docEl.msRequestFullscreen) { // IE/Edge
-                docEl.msRequestFullscreen();
+                
+                // Add close button
+                const closeButton = document.createElement('button');
+                closeButton.className = 'close-help';
+                closeButton.textContent = '×';
+                closeButton.setAttribute('aria-label', 'Close help');
+                
+                // Add event listener to close button
+                this.safeAddEventListener(closeButton, 'click', () => {
+                    helpOverlay.classList.remove('active');
+                    this.safeSetTimeout(() => {
+                        if (helpOverlay.parentNode) {
+                            helpOverlay.remove();
+                        }
+                    }, 300);
+                });
+                
+                // Add event listener to close on ESC key
+                const escHandler = (e) => {
+                    if (e.key === 'Escape') {
+                        closeButton.click();
+                        document.removeEventListener('keydown', escHandler);
+                    }
+                };
+                
+                this.safeAddEventListener(document, 'keydown', escHandler);
+                
+                // Assemble help overlay
+                helpContent.appendChild(closeButton);
+                helpContent.appendChild(title);
+                helpContent.appendChild(shortcutsList);
+                helpOverlay.appendChild(helpContent);
+                
+                document.body.appendChild(helpOverlay);
+                
+                // Show with animation
+                this.safeSetTimeout(() => {
+                    helpOverlay.classList.add('active');
+                }, 10);
+            } else {
+                // Toggle visibility if already exists
+                if (helpOverlay.classList.contains('active')) {
+                    helpOverlay.classList.remove('active');
+                    this.safeSetTimeout(() => {
+                        if (helpOverlay.parentNode) {
+                            helpOverlay.remove();
+                        }
+                    }, 300);
+                } else {
+                    helpOverlay.classList.add('active');
+                }
             }
-        } else {
-            // Exit fullscreen with vendor prefixes
-            if (document.exitFullscreen) {
-                document.exitFullscreen();
-            } else if (document.webkitExitFullscreen) { // Safari
-                document.webkitExitFullscreen();
-            } else if (document.mozCancelFullScreen) { // Firefox
-                document.mozCancelFullScreen();
-            } else if (document.msExitFullscreen) { // IE/Edge
-                document.msExitFullscreen();
-            }
+        } catch (error) {
+            console.error('Error showing help:', error);
+        }
+    }
+    
+    toggleAccessMode() {
+        try {
+            document.body.classList.toggle('access-mode');
+            
+            // Show notification
+            const isEnabled = document.body.classList.contains('access-mode');
+            this.showNotification(`Accessibility mode ${isEnabled ? 'enabled' : 'disabled'}`);
+        } catch (error) {
+            console.error('Error toggling access mode:', error);
+        }
+    }
+    
+    showNotification(message) {
+        try {
+            // Create notification element
+            const notification = document.createElement('div');
+            notification.className = 'notification';
+            notification.textContent = message;
+            
+            // Style the notification
+            notification.style.cssText = `
+                position: fixed;
+                bottom: 20px;
+                left: 50%;
+                transform: translateX(-50%);
+                background-color: rgba(0, 0, 0, 0.8);
+                color: white;
+                padding: 12px 20px;
+                border-radius: 4px;
+                z-index: 10000;
+                font-size: 14px;
+                box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+                animation: slideIn 0.3s ease-out;
+            `;
+            
+            document.body.appendChild(notification);
+            
+            // Auto-remove after 5 seconds
+            this.safeSetTimeout(() => {
+                if (notification.parentNode) {
+                    notification.style.animation = 'slideOut 0.3s ease-in';
+                    this.safeSetTimeout(() => {
+                        if (notification.parentNode) {
+                            notification.remove();
+                        }
+                    }, 300);
+                }
+            }, 5000);
+        } catch (error) {
+            console.error('Error showing notification:', error);
         }
     }
     
@@ -867,127 +950,31 @@ class PresentationController {
         try {
             const card = document.getElementById(`${role}-card`);
             if (!card) {
-                console.warn(`Character card not found for role: ${role}`);
+                console.error(`Character card not found for role: ${role}`);
                 return false;
             }
             
-            const nameElement = card.querySelector('.character-name');
-            const imgElement = card.querySelector('img');
-            
-            if (nameElement) {
-                nameElement.textContent = name;
-            } else {
-                console.warn(`Name element not found in card for role: ${role}`);
-                return false;
+            // Update card image
+            const cardImage = card.querySelector('img');
+            if (cardImage) {
+                cardImage.src = imgSrc;
+                cardImage.alt = name;
             }
             
-            if (imgElement) {
-                // Save the original src to restore if the new image fails to load
-                const originalSrc = imgElement.src;
-                
-                // Set up error handler before changing src
-                imgElement.onerror = () => {
-                    console.error(`Failed to load image: ${imgSrc}`);
-                    imgElement.src = originalSrc; // Restore original image
-                    imgElement.onerror = null; // Remove the error handler
-                    
-                    // Show user-friendly error notification
-                    this.showErrorNotification(`Failed to load image for ${role}`);
-                };
-                
-                // Set up success handler
-                imgElement.onload = () => {
-                    // Image loaded successfully - no need to log in production
-                    imgElement.onload = null; // Remove the success handler
-                };
-                
-                imgElement.src = imgSrc;
-            } else {
-                console.warn(`Image element not found in card for role: ${role}`);
-                return false;
+            // Update card name
+            const cardName = card.querySelector('.character-name');
+            if (cardName) {
+                cardName.textContent = name;
             }
+            
+            // Update character data attribute
+            card.setAttribute('data-character', name);
             
             return true;
         } catch (error) {
             console.error('Error updating character:', error);
-            this.showErrorNotification(`Error updating character: ${role}`);
             return false;
         }
-    }
-    
-    // Show user-friendly error notifications
-    showErrorNotification(message) {
-        const notification = document.createElement('div');
-        notification.className = 'error-notification';
-        notification.textContent = message;
-        notification.style.cssText = `
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            background: #f44336;
-            color: white;
-            padding: 12px 20px;
-            border-radius: 4px;
-            z-index: 10000;
-            font-size: 14px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
-            animation: slideIn 0.3s ease-out;
-        `;
-        
-        document.body.appendChild(notification);
-        
-        // Auto-remove after 5 seconds
-        setTimeout(() => {
-            if (notification.parentNode) {
-                notification.style.animation = 'slideOut 0.3s ease-in';
-                setTimeout(() => {
-                    if (notification.parentNode) {
-                        notification.remove();
-                    }
-                }, 300);
-            }
-        }, 5000);
-    }
-    
-    // Show navigation hint when entering presentation mode
-    showNavigationHint() {
-        // Remove any existing hint first
-        const existingHint = document.querySelector('.keyboard-hint');
-        if (existingHint) {
-            existingHint.remove();
-        }
-        
-        // Create the navigation hint element
-        const hint = document.createElement('div');
-        hint.className = 'keyboard-hint';
-        // Safe DOM manipulation instead of innerHTML
-        hint.textContent = '← → Arrow keys to navigate • H for help • ESC to exit fullscreen';
-        
-        // Add to document
-        document.body.appendChild(hint);
-        
-        // Show with fade in effect
-        hint.style.opacity = '0';
-        hint.style.transform = 'translateX(-50%) translateY(10px)';
-        
-        // Trigger fade in
-        setTimeout(() => {
-            hint.style.opacity = '1';
-            hint.style.transform = 'translateX(-50%) translateY(0)';
-        }, 100);
-        
-        // Auto-hide after 4 seconds with fade out
-        setTimeout(() => {
-            hint.style.opacity = '0';
-            hint.style.transform = 'translateX(-50%) translateY(10px)';
-            
-            // Remove element after fade out completes
-            setTimeout(() => {
-                if (hint.parentNode) {
-                    hint.remove();
-                }
-            }, 500);
-        }, 4000);
     }
 }
 
@@ -1006,184 +993,106 @@ document.addEventListener('DOMContentLoaded', () => {
         // Poster Button Functionality
         // Execute immediately and also on DOMContentLoaded
         function setupPosterButton() {
-            const posterButton = document.getElementById('poster-button');
-            const fullscreenViewer = document.getElementById('fullscreen-image-viewer');
-            
-            // Track if the image viewer is open - defined at the correct scope level
-            let imageViewerOpen = false;
-            
-            // Store event listeners for cleanup
-            const eventListeners = [];
-            
-            // Detect Safari browser
-            const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
-            
-            if (posterButton && fullscreenViewer) {
-                try {
-                    // Open fullscreen image when poster button is clicked
-                    const posterClickHandler = function(e) {
-                        try {
-                            e.preventDefault();
-                            e.stopPropagation();
-                            console.log('Poster button clicked');
-                            
-                            // Hide navigation and other elements
-                            const elements = document.querySelectorAll('.slide-navigation, nav');
-                            elements.forEach(el => {
-                                if (el) el.style.display = 'none';
-                            });
-                            
-                            // Show fullscreen viewer
-                            fullscreenViewer.style.display = 'flex';
-                            imageViewerOpen = true;
-                            
-                            // Request fullscreen mode with Safari-specific handling
-                            try {
-                                if (fullscreenViewer.requestFullscreen) {
-                                    fullscreenViewer.requestFullscreen().catch(err => {
-                                        console.warn('Fullscreen request failed:', err);
-                                        // Continue showing the viewer even if fullscreen fails
-                                    });
-                                } else if (fullscreenViewer.webkitRequestFullscreen) {
-                                    // Safari and older WebKit browsers
-                                    fullscreenViewer.webkitRequestFullscreen();
-                                } else if (fullscreenViewer.mozRequestFullScreen) {
-                                    fullscreenViewer.mozRequestFullScreen();
-                                } else if (fullscreenViewer.msRequestFullscreen) {
-                                    fullscreenViewer.msRequestFullscreen();
-                                } else {
-                                    // Fallback for browsers that don't support fullscreen API
-                                    console.warn('Fullscreen API not supported, using fallback');
-                                    // Apply fullscreen-like styles
-                                    document.body.classList.add('using-fullscreen-fallback');
-                                    fullscreenViewer.classList.add('using-fullscreen-fallback');
-                                }
-                            } catch (fsError) {
-                                console.error('Error requesting fullscreen:', fsError);
-                                // Continue showing the viewer even if fullscreen fails
-                            }
-                        } catch (clickError) {
-                            console.error('Error handling poster button click:', clickError);
-                        }
-                    };
-                    
-                    posterButton.addEventListener('click', posterClickHandler);
-                    eventListeners.push({ element: posterButton, type: 'click', handler: posterClickHandler });
-                    
-                    // Close fullscreen image when ESC key is pressed
-                    const keydownHandler = function(event) {
-                        if (event.key === 'Escape') {
-                            // If image viewer is open, close it but stay in fullscreen
-                            if (fullscreenViewer && fullscreenViewer.style.display === 'flex') {
-                                event.preventDefault(); // Prevent default ESC behavior
-                                closeImageOnly();
-                            }
-                        }
-                    };
-                    
-                    document.addEventListener('keydown', keydownHandler);
-                    eventListeners.push({ element: document, type: 'keydown', handler: keydownHandler });
-                    
-                    // Also close when clicking anywhere on the fullscreen viewer
-                    const viewerClickHandler = function(e) {
-                        // Prevent any default behavior
+            try {
+                const posterButton = document.getElementById('poster-button');
+                const fullscreenViewer = document.getElementById('fullscreen-image-viewer');
+                const fullscreenImage = document.getElementById('fullscreen-image');
+                
+                // Track if the image viewer is open
+                let imageViewerOpen = false;
+                
+                // Detect Safari browser
+                const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
+                
+                if (!posterButton || !fullscreenViewer) {
+                    console.warn('Poster button or fullscreen viewer not found');
+                    return;
+                }
+                
+                // Open fullscreen image when poster button is clicked
+                const posterClickHandler = function(e) {
+                    try {
                         e.preventDefault();
                         e.stopPropagation();
                         
-                        // Close the image viewer
-                        closeImageOnly();
-                    };
-                    
-                    fullscreenViewer.addEventListener('click', viewerClickHandler);
-                    eventListeners.push({ element: fullscreenViewer, type: 'click', handler: viewerClickHandler });
-                    
-                    // Handle fullscreen change events from browser with proper vendor prefixes
-                    document.addEventListener('fullscreenchange', handleFullscreenChange);
-                    document.addEventListener('webkitfullscreenchange', handleFullscreenChange);
-                    document.addEventListener('mozfullscreenchange', handleFullscreenChange);
-                    document.addEventListener('MSFullscreenChange', handleFullscreenChange);
-                    
-                    eventListeners.push({ element: document, type: 'fullscreenchange', handler: handleFullscreenChange });
-                    eventListeners.push({ element: document, type: 'webkitfullscreenchange', handler: handleFullscreenChange });
-                    eventListeners.push({ element: document, type: 'mozfullscreenchange', handler: handleFullscreenChange });
-                    eventListeners.push({ element: document, type: 'MSFullscreenChange', handler: handleFullscreenChange });
-                    
-                    function handleFullscreenChange() {
-                        try {
-                            // If we're no longer in fullscreen mode but the viewer is still displayed
-                            const isFullscreenActive = document.fullscreenElement || 
-                                document.webkitFullscreenElement || 
-                                document.mozFullScreenElement || 
-                                document.msFullscreenElement;
-                                
-                            if (!isFullscreenActive && 
-                                fullscreenViewer && 
-                                fullscreenViewer.style.display === 'flex') {
-                                
-                                // Hide fullscreen viewer
-                                fullscreenViewer.style.display = 'none';
-                                
-                                // Remove fallback classes if they were added
-                                document.body.classList.remove('using-fullscreen-fallback');
-                                fullscreenViewer.classList.remove('using-fullscreen-fallback');
-                                
-                                // Show navigation again
-                                restoreNavigation();
-                            }
-                        } catch (error) {
-                            console.error('Error handling fullscreen change:', error);
-                            // Attempt recovery
-                            if (fullscreenViewer) {
-                                fullscreenViewer.style.display = 'none';
-                            }
-                            restoreNavigation();
+                        // Check if poster was just closed to prevent immediate reopening
+                        if (window.posterJustClosed) {
+                            console.log('Poster was just closed, ignoring click');
+                            return;
                         }
-                    }
-                    
-                    // Function to restore navigation elements
-                    function restoreNavigation() {
-                        try {
-                            // Show navigation again using classes instead of direct style manipulation
-                            const elements = document.querySelectorAll('.slide-navigation, nav');
-                            elements.forEach(el => {
-                                if (el) {
-                                    el.style.display = '';
-                                    el.style.visibility = '';
-                                    el.style.opacity = '';
-                                    el.style.pointerEvents = '';
-                                }
-                            });
-                            
-                            // Reset the flag
-                            imageViewerOpen = false;
-                        } catch (error) {
-                            console.error('Error restoring navigation:', error);
+                        
+                        // Check if button is disabled
+                        if (e.currentTarget && (e.currentTarget.disabled || e.currentTarget.classList.contains('button-disabled'))) {
+                            console.log('Button is disabled, ignoring click');
+                            return;
                         }
-                    }
-                    
-                    // Function to close only the image viewer but stay in fullscreen mode
-                    function closeImageOnly() {
+                        
+                        // Hide navigation and other elements
+                        const elements = document.querySelectorAll('.slide-navigation, nav');
+                        elements.forEach(el => {
+                            if (el) el.style.display = 'none';
+                        });
+                        
+                        // Show fullscreen viewer
+                        fullscreenViewer.style.display = 'flex';
+                        imageViewerOpen = true;
+                        
+                        // Focus the viewer for keyboard accessibility
+                        fullscreenViewer.focus();
+                        
+                        // Request fullscreen mode with Safari-specific handling
                         try {
-                            // Hide fullscreen viewer
-                            if (fullscreenViewer) {
-                                fullscreenViewer.style.display = 'none';
+                            if (fullscreenViewer.requestFullscreen) {
+                                fullscreenViewer.requestFullscreen().catch(err => {
+                                    console.warn('Fullscreen request failed:', err);
+                                    // Continue showing the viewer even if fullscreen fails
+                                    fullscreenViewer.classList.add('using-fullscreen-fallback');
+                                    document.body.style.overflow = 'hidden';
+                                });
+                            } else if (fullscreenViewer.webkitRequestFullscreen) {
+                                // Safari and older WebKit browsers
+                                fullscreenViewer.webkitRequestFullscreen();
+                            } else if (fullscreenViewer.mozRequestFullScreen) {
+                                fullscreenViewer.mozRequestFullScreen();
+                            } else if (fullscreenViewer.msRequestFullscreen) {
+                                fullscreenViewer.msRequestFullscreen();
+                            } else {
+                                // Fallback for browsers that don't support fullscreen API
+                                fullscreenViewer.classList.add('using-fullscreen-fallback');
+                                document.body.style.overflow = 'hidden';
                             }
-                            
-                            // Remove fallback classes if they were added
-                            document.body.classList.remove('using-fullscreen-fallback');
-                            if (fullscreenViewer) {
-                                fullscreenViewer.classList.remove('using-fullscreen-fallback');
-                            }
-                            
-                            // Show navigation again
-                            restoreNavigation();
-                            
-                            // Exit fullscreen mode with proper vendor prefixes
+                        } catch (err) {
+                            console.warn('Error requesting fullscreen:', err);
+                            // Fallback if fullscreen request fails
+                            fullscreenViewer.classList.add('using-fullscreen-fallback');
+                            document.body.style.overflow = 'hidden';
+                        }
+                        
+                        // Show close hint
+                        const closeHint = fullscreenViewer.querySelector('.fullscreen-close-hint');
+                        if (closeHint) {
+                            AppUtils.safeSetTimeout(() => {
+                                closeHint.style.opacity = '1';
+                                
+                                // Hide hint after 3 seconds
+                                AppUtils.safeSetTimeout(() => {
+                                    closeHint.style.opacity = '0';
+                                }, 3000);
+                            }, 500);
+                        }
+                    } catch (error) {
+                        console.error('Error in poster button click handler:', error);
+                    }
+                };
+                
+                // Close fullscreen image when clicked
+                const viewerClickHandler = function() {
+                    try {
+                        if (imageViewerOpen) {
+                            // Exit fullscreen mode
                             try {
                                 if (document.exitFullscreen) {
-                                    document.exitFullscreen().catch(err => {
-                                        console.warn('Error exiting fullscreen:', err);
-                                    });
+                                    document.exitFullscreen();
                                 } else if (document.webkitExitFullscreen) {
                                     document.webkitExitFullscreen();
                                 } else if (document.mozCancelFullScreen) {
@@ -1191,39 +1100,131 @@ document.addEventListener('DOMContentLoaded', () => {
                                 } else if (document.msExitFullscreen) {
                                     document.msExitFullscreen();
                                 }
-                            } catch (fsError) {
-                                console.warn('Error exiting fullscreen:', fsError);
+                            } catch (err) {
+                                console.warn('Error exiting fullscreen:', err);
                             }
-                        } catch (error) {
-                            console.error('Error closing image viewer:', error);
+                            
+                            // Remove fallback class if it was added
+                            fullscreenViewer.classList.remove('using-fullscreen-fallback');
+                            document.body.style.overflow = '';
+                            
+                            // Hide viewer
+                            fullscreenViewer.style.display = 'none';
+                            imageViewerOpen = false;
+                            
+                            // Show navigation and other elements again
+                            const elements = document.querySelectorAll('.slide-navigation, nav');
+                            elements.forEach(el => {
+                                if (el) el.style.display = '';
+                            });
+                            
+                            // Set a flag to prevent immediate reopening
+                            window.posterJustClosed = true;
+                            
+                            // Immediately disable the poster button
+                            if (posterButton) {
+                                posterButton.disabled = true;
+                                posterButton.classList.add('button-disabled');
+                                posterButton.setAttribute('aria-disabled', 'true');
+                            }
+                            
+                            // Clear the flag after a longer delay (1 second)
+                            AppUtils.safeSetTimeout(() => {
+                                window.posterJustClosed = false;
+                                
+                                // Re-enable the button after the delay
+                                if (posterButton) {
+                                    posterButton.disabled = false;
+                                    posterButton.classList.remove('button-disabled');
+                                    posterButton.setAttribute('aria-disabled', 'false');
+                                }
+                            }, 1000);
+                            
+                            // Return focus to poster button for accessibility
+                            if (posterButton) {
+                                AppUtils.safeSetTimeout(() => {
+                                    posterButton.focus();
+                                }, 100);
+                            }
                         }
+                    } catch (error) {
+                        console.error('Error in viewer click handler:', error);
                     }
-                    
-                    // Function to close fullscreen viewer and exit fullscreen mode
-                    function closeFullscreenViewer() {
-                        closeImageOnly();
+                };
+                
+                // Handle fullscreen change events
+                const fullscreenChangeHandler = function() {
+                    try {
+                        const isFullscreen = document.fullscreenElement || 
+                                            document.webkitFullscreenElement || 
+                                            document.mozFullScreenElement || 
+                                            document.msFullscreenElement;
+                        
+                        if (!isFullscreen && imageViewerOpen) {
+                            // User exited fullscreen, close the viewer
+                            viewerClickHandler();
+                        }
+                    } catch (error) {
+                        console.error('Error in fullscreen change handler:', error);
                     }
-                    
-                    // Function to clean up event listeners
-                    function cleanupPosterButtonListeners() {
-                        eventListeners.forEach(({ element, type, handler }) => {
-                            if (element) {
-                                element.removeEventListener(type, handler);
-                            }
-                        });
+                };
+                
+                // Add event listeners with tracking
+                AppUtils.safeAddEventListener(posterButton, 'click', posterClickHandler);
+                AppUtils.safeAddEventListener(fullscreenViewer, 'click', viewerClickHandler);
+                
+                // Add fullscreen change event listeners with tracking
+                AppUtils.safeAddEventListener(document, 'fullscreenchange', fullscreenChangeHandler);
+                AppUtils.safeAddEventListener(document, 'webkitfullscreenchange', fullscreenChangeHandler);
+                AppUtils.safeAddEventListener(document, 'mozfullscreenchange', fullscreenChangeHandler);
+                AppUtils.safeAddEventListener(document, 'MSFullscreenChange', fullscreenChangeHandler);
+                
+                // Add ESC key handler with tracking
+                const keyHandler = function(e) {
+                    try {
+                        if (e.key === 'Escape' && imageViewerOpen) {
+                            viewerClickHandler();
+                        }
+                    } catch (error) {
+                        console.error('Error in key handler:', error);
                     }
-                    
-                    // Add cleanup function to window for potential use
-                    window.cleanupPosterButtonListeners = cleanupPosterButtonListeners;
-                    
-                    console.log('Poster button setup complete');
-                } catch (setupError) {
-                    console.error('Error setting up poster button:', setupError);
+                };
+                
+                AppUtils.safeAddEventListener(document, 'keydown', keyHandler);
+                
+                // Add keyboard accessibility for poster button
+                if (posterButton) {
+                    AppUtils.safeAddEventListener(posterButton, 'keydown', (event) => {
+                        if ((event.key === 'Enter' || event.key === ' ') && 
+                            !posterButton.disabled && 
+                            !posterButton.classList.contains('button-disabled') &&
+                            !window.posterJustClosed) {
+                            event.preventDefault();
+                            posterClickHandler(event);
+                        }
+                    });
                 }
-            } else {
-                console.log('Poster button or fullscreen viewer not found');
-                if (!posterButton) console.log('Poster button not found');
-                if (!fullscreenViewer) console.log('Fullscreen viewer not found');
+                
+                // Add keyboard accessibility for fullscreen viewer
+                if (fullscreenViewer) {
+                    AppUtils.safeAddEventListener(fullscreenViewer, 'keydown', (event) => {
+                        if (event.key === 'Escape' || event.key === 'Enter' || event.key === ' ') {
+                            event.preventDefault();
+                            viewerClickHandler();
+                        }
+                    });
+                }
+                
+                // Safari-specific handling for fullscreen
+                if (isSafari && fullscreenImage) {
+                    // Add special handling for Safari's fullscreen behavior
+                    fullscreenImage.style.maxHeight = '100vh';
+                    fullscreenImage.style.maxWidth = '100vw';
+                    fullscreenImage.style.objectFit = 'contain';
+                }
+                
+            } catch (error) {
+                console.error('Error setting up poster button:', error);
             }
         }
         
@@ -1234,13 +1235,20 @@ document.addEventListener('DOMContentLoaded', () => {
         document.addEventListener('DOMContentLoaded', setupPosterButton);
     } catch (error) {
         console.error('Failed to initialize presentation:', error);
-        // Show fallback message to user
-        const body = document.body;
-        if (body) {
-            const errorDiv = document.createElement('div');
-            errorDiv.style.cssText = 'position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: #f44336; color: white; padding: 20px; border-radius: 5px; z-index: 9999;';
-            errorDiv.textContent = 'Sorry, this presentation requires a modern browser. Please update your browser or try a different one.';
-            body.appendChild(errorDiv);
+    }
+});
+
+// Add window unload event to clean up resources
+window.addEventListener('beforeunload', () => {
+    try {
+        // Clean up global timeouts and event listeners
+        AppUtils.cleanup();
+        
+        // Clean up presentation controller resources
+        if (window.presentationController && typeof window.presentationController.cleanup === 'function') {
+            window.presentationController.cleanup();
         }
+    } catch (error) {
+        console.error('Error during cleanup:', error);
     }
 });
